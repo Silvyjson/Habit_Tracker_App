@@ -71,7 +71,12 @@ Once the application starts, the user is presented with a **menu** displayed on 
     - The system will update the streak and mark the task as completed.
 
 - **ENTER 6**: View tasks completed today.
+
   - **Function**: This option displays all tasks that have been completed today.
+  - **Process**: The tasks are retrieved from the database and printed on the terminal, along with the habit names and timestamps.
+
+- **ENTER 7**: View all tasks.
+  - **Function**: This option displays all tasks in the database.
   - **Process**: The tasks are retrieved from the database and printed on the terminal, along with the habit names and timestamps.
 
 ---
