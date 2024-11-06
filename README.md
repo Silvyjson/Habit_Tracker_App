@@ -8,6 +8,7 @@ A habit tracking app written in Python that allows users to create, manage, and 
 
 - **Python**: The primary language used to build the app.
 - **SQLite3**: The database used to store habit and task information locally on the user's machine.
+- **pytest**: A testing framework used for unit testing the application.
 
 ---
 
@@ -15,7 +16,7 @@ A habit tracking app written in Python that allows users to create, manage, and 
 
 1. **Download and Save Files**:
 
-   - Ensure that both the **`habits.py`** file and the **SQLite3 database file** (if already created) are saved in the same directory on your machine.
+   - Clone the repository on your machine.
 
 2. **Navigate to the Folder**:
 
@@ -25,11 +26,28 @@ A habit tracking app written in Python that allows users to create, manage, and 
      ```
 
 3. **Run the Application**:
+
    - Start the application by running the following command:
      ```bash
      python habits.py
      ```
    - Ensure that **Python 3.7 or later** is installed on your machine.
+
+4. **Testing with `pytest`**:
+
+   - The application uses **pytest** for unit testing. To run the tests, you will need to have **pytest** installed.
+
+     - You can install pytest by running the following command:
+       ```bash
+       pip install pytest
+       ```
+
+   - To start the tests, run this command:
+     ```bash
+     pytest test.py
+     ```
+   - **Test File Example**:
+     - The tests for this application are in a Python file that imports the app’s modules, like `my_habits.py` and `analytics_module.py`, and test functionality such as adding, removing, and listing habits. It uses fixtures to set up and tear down the database, as well as assertions to validate expected behavior.
 
 ---
 
@@ -76,8 +94,21 @@ Once the application starts, the user is presented with a **menu** displayed on 
   - **Process**: The tasks are retrieved from the database and printed on the terminal, along with the habit names and timestamps.
 
 - **ENTER 7**: View all tasks.
+
   - **Function**: This option displays all tasks in the database.
   - **Process**: The tasks are retrieved from the database and printed on the terminal, along with the habit names and timestamps.
+
+- **ENTER 8**: analyze user habit.
+
+  - **Function**: This option analyzes user habit in the database.
+  - **Process**: The `analyze_user_habits` function retrieves and summarizes key insights from the database on user habit patterns, highlighting streaks, current habits, and areas needing improvement.
+
+- **ENTER 9**: Get longest streak for a specific habit.
+
+  - **Function**: This option returns longest streak for a specific habit in the database.
+  - **Process**: This function retrieves longest streak of a specific habit from the database.
+
+- **ENTER 0**: Exit the application.
 
 ---
 
