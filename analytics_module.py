@@ -8,7 +8,7 @@ dbcursor = dbconnection.cursor()
 
 # Helper function to format date
 def get_current_date():
-    return datetime.datetime.now().strftime("%x")
+    return datetime.datetime.now().strftime("%Y-%m-%d")
 
 # ANALYTICS FUNCTIONS
 
@@ -27,7 +27,7 @@ def get_habits_by_period(periodicity):
 
 # Get struggled habits over the last month
 def get_struggled_habits():
-    last_month_start = (datetime.datetime.now() - timedelta(days=30)).strftime("%x")
+    last_month_start = (datetime.datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
     query = "SELECT task_name FROM Tasks WHERE task_status = 'missed' AND task_log_date >= ?"
     dbcursor.execute(query, (last_month_start,))
     return [task[0] for task in dbcursor.fetchall()]

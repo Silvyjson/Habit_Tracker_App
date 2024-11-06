@@ -11,7 +11,7 @@ class Habit:
         self.id = None  # Will be set by the database
         self.habit_name = habit_name
         self.habit_period = habit_period
-        self.creation_date = creation_date or datetime.now().strftime("%x")
+        self.creation_date = creation_date or datetime.now().strftime("%Y-%m-%d")
         self.habit_status = habit_status
 
     def mark_inactive(self):
@@ -25,7 +25,7 @@ class Task:
     def __init__(self, habit_id, date=None, completed=True):
         self.id = None  # Will be set by the database
         self.habit_id = habit_id
-        self.date = date or datetime.now().date().strftime("%x")
+        self.date = date or datetime.now().date().strftime("%Y-%m-%d")
         self.completed = completed
 
     def __str__(self):
@@ -105,7 +105,7 @@ class MyHabits:
         habit_data = dbcursor.fetchone()
 
         if habit_data:
-            today = datetime.now().date().strftime("%x")
+            today = datetime.now().date().strftime("%Y-%m-%d")
             habit_period = habit_data[2] 
             habit_name = habit_data[1]
             current_streak = habit_data[5]
@@ -121,8 +121,6 @@ class MyHabits:
                 query = "SELECT * FROM Tasks WHERE habit_id = ? AND periodicity = ? AND task_log_date = ?"
                 dbcursor.execute(query, (habit_id, "daily", today))
                 existing_task = dbcursor.fetchone()
-
-                print("Existing task for yesterday:", existing_task)
 
                 if existing_task:
                     print(f"Habit '{habit_name}' has already been checked off today.")
@@ -142,8 +140,8 @@ class MyHabits:
 
             elif habit_period == 'weekly':
                 # Define the start and end of the current week (Monday to Sunday)
-                week_start = today - timedelta(days=today.weekday())
-                week_end = week_start + timedelta(days=6)
+                week_start = (datetime.now() - timedelta(days=datetime.now().weekday())).date().strftime("%Y-%m-%d")
+                week_end = (datetime.now() + timedelta(days=(6 - datetime.now().weekday()))).date().strftime("%Y-%m-%d")
 
                 # Check if there is an existing task logged for this habit within the current week
                 query = """
@@ -174,7 +172,7 @@ class MyHabits:
 
     def get_completed_tasks(self, log_date=None):
         """List all tasks completed on a specific date."""
-        log_date = log_date or datetime.now().date().strftime("%x")
+        log_date = log_date or datetime.now().date().strftime("%Y-%m-%d")
         completed_tasks = get_completed_tasks_for_date(log_date)
         
         if completed_tasks:
