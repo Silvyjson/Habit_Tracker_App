@@ -197,5 +197,6 @@ class MyHabits:
                 dbcursor.execute("SELECT habit_name FROM Habits WHERE id = ?", (task_data[1],))
                 habit = dbcursor.fetchone()
                 print(f"Task ID: {task_data[0]}, Habit: {habit[0]}, Periodicity: {task_data[3]}, Date: {task_data[4]}, Streak: {task_data[5]}, Task status: {task_data[6]},")
+                print('------------------------------------------------------------------------------------------------')
         else:
             print("No tasks found.")

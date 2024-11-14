@@ -1,5 +1,4 @@
-import datetime
-from datetime import date, timedelta
+from datetime import datetime, timedelta
 from db_manager import create_connection
 
 # Initialize database connection
@@ -8,7 +7,7 @@ dbcursor = dbconnection.cursor()
 
 # Helper function to format date
 def get_current_date():
-    return datetime.datetime.now().strftime("%Y-%m-%d")
+    return datetime.now().strftime("%Y-%m-%d")
 
 # ANALYTICS FUNCTIONS
 
@@ -19,25 +18,58 @@ def get_longest_streak():
 
 # Get all active habits by period
 def get_habits_by_period(periodicity):
-    query = "SELECT habit_name FROM Habits WHERE habit_period = ? AND habit_status = 'active'"
     period_map = {1: "daily", 2: "weekly"}
     period = period_map.get(periodicity)
+    query = "SELECT habit_name FROM Habits WHERE habit_period = ? AND habit_status = 'active'"
     dbcursor.execute(query, (period,))
     return [habit[0] for habit in dbcursor.fetchall()]
 
+# Helper to calculate missed counts
+def calculate_missed_counts(habit_name, habit_period, creation_date, interval):
+    current_date = datetime.now()
+    habit_start_date = max(current_date - timedelta(days=30), datetime.strptime(creation_date, "%Y-%m-%d"))
+    if habit_period == 'daily':
+        tracked_units = (current_date - habit_start_date).days + 1
+        query = "SELECT COUNT(DISTINCT task_log_date) FROM Tasks WHERE task_name = ? AND task_log_date BETWEEN ? AND ?"
+    else:
+        tracked_units = ((current_date - habit_start_date).days // 7) + 1
+        query = "SELECT COUNT(DISTINCT strftime('%Y-%W', task_log_date)) FROM Tasks WHERE task_name = ? AND task_log_date BETWEEN ? AND ?"
+
+    completed_units = dbcursor.execute(query, (habit_name, habit_start_date.strftime("%Y-%m-%d"), get_current_date())).fetchone()[0]
+    return tracked_units, completed_units
+
 # Get struggled habits over the last month
 def get_struggled_habits():
-    last_month_start = (datetime.datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
-    query = "SELECT task_name FROM Tasks WHERE task_status = 'missed' AND task_log_date >= ?"
-    dbcursor.execute(query, (last_month_start,))
-    return [task[0] for task in dbcursor.fetchall()]
+    struggled_habits = []
+    query = "SELECT habit_name, creation_date, habit_period FROM Habits WHERE habit_status = 'active'"
+    
+    for habit_name, creation_date, habit_period in dbcursor.execute(query).fetchall():
+         # Calculate how long the habit has been active
+        habit_creation_date = datetime.strptime(creation_date, "%Y-%m-%d")
+        days_since_creation = (datetime.now() - habit_creation_date).days
 
-# Get missed habits based on Last_completed date
+        # Determine the interval for tracking missed units
+        interval = min(days_since_creation, 30) if habit_period == 'daily' else min((days_since_creation // 7) + 1, 4)
+        tracked_units, completed_units = calculate_missed_counts(habit_name, habit_period, creation_date, interval)
+
+        print(tracked_units, completed_units)
+
+        if completed_units < interval:
+            struggled_habits.append(f"The {habit_period} habit {habit_name} has struggled for the past {interval} {'days' if habit_period == 'daily' else 'weeks'} with {tracked_units - completed_units} missed units within this month.")
+
+    return struggled_habits
+
+# Get missed habits from creation date to today
 def get_missed_habits():
-    current_date = get_current_date()
-    query = "SELECT habit_name FROM Habits WHERE last_completed < ? AND habit_status = 'active'"
-    dbcursor.execute(query, (current_date,))
-    return [habit[0] for habit in dbcursor.fetchall()]
+    missed_habits = []
+    query = "SELECT habit_name, creation_date, habit_period FROM Habits WHERE habit_status = 'active'"
+    
+    for habit_name, creation_date, habit_period in dbcursor.execute(query).fetchall():
+        tracked_units, completed_units = calculate_missed_counts(habit_name, habit_period, creation_date, interval=None)
+        
+        if completed_units < tracked_units:
+            missed_habits.append(f"The {habit_period} habit {habit_name} was missed {tracked_units - completed_units} times since its creation")
+    return missed_habits
 
 # DISPLAY FUNCTIONS
 
@@ -86,7 +118,6 @@ def get_longest_streak_for_habit(habit_name):
         print("No active habit found with the name:", habit_name)
         
     return result[0] if result else 0
-
 
 # LIST AND LOGGING FUNCTIONS
 
