@@ -29,10 +29,10 @@ def calculate_missed_counts(habit_name, habit_period, creation_date, interval):
     current_date = datetime.now()
     habit_start_date = max(current_date - timedelta(days=30), datetime.strptime(creation_date, "%Y-%m-%d"))
     if habit_period == 'daily':
-        tracked_units = (current_date - habit_start_date).days + 1
+        tracked_units = (current_date - habit_start_date).days
         query = "SELECT COUNT(DISTINCT task_log_date) FROM Tasks WHERE task_name = ? AND task_log_date BETWEEN ? AND ?"
     else:
-        tracked_units = ((current_date - habit_start_date).days // 7) + 1
+        tracked_units = (current_date - habit_start_date).days // 7
         query = "SELECT COUNT(DISTINCT strftime('%Y-%W', task_log_date)) FROM Tasks WHERE task_name = ? AND task_log_date BETWEEN ? AND ?"
 
     completed_units = dbcursor.execute(query, (habit_name, habit_start_date.strftime("%Y-%m-%d"), get_current_date())).fetchone()[0]
@@ -51,8 +51,6 @@ def get_struggled_habits():
         # Determine the interval for tracking missed units
         interval = min(days_since_creation, 30) if habit_period == 'daily' else min((days_since_creation // 7) + 1, 4)
         tracked_units, completed_units = calculate_missed_counts(habit_name, habit_period, creation_date, interval)
-
-        print(tracked_units, completed_units)
 
         if completed_units < interval:
             struggled_habits.append(f"The {habit_period} habit {habit_name} has struggled for the past {interval} {'days' if habit_period == 'daily' else 'weeks'} with {tracked_units - completed_units} missed units within this month.")
