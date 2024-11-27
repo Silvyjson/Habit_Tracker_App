@@ -28,14 +28,26 @@ def get_habits_by_period(periodicity):
 def calculate_missed_counts(habit_name, habit_period, creation_date, interval):
     current_date = datetime.now()
     habit_start_date = max(current_date - timedelta(days=30), datetime.strptime(creation_date, "%Y-%m-%d"))
+    
     if habit_period == 'daily':
-        tracked_units = (current_date - habit_start_date).days
+        tracked_units = (current_date - habit_start_date).days + 1
         query = "SELECT COUNT(DISTINCT task_log_date) FROM Tasks WHERE task_name = ? AND task_log_date BETWEEN ? AND ?"
-    else:
-        tracked_units = (current_date - habit_start_date).days // 7
-        query = "SELECT COUNT(DISTINCT strftime('%Y-%W', task_log_date)) FROM Tasks WHERE task_name = ? AND task_log_date BETWEEN ? AND ?"
+    elif habit_period == 'weekly':
+        # Calculate all ISO weeks in the date range
+        start_week = habit_start_date.isocalendar()[1]
+        end_week = current_date.isocalendar()[1]
+        tracked_units = end_week - start_week + 1
 
-    completed_units = dbcursor.execute(query, (habit_name, habit_start_date.strftime("%Y-%m-%d"), get_current_date())).fetchone()[0]
+        # Count distinct weeks with logs
+        query = "SELECT COUNT(DISTINCT strftime('%Y-%W', task_log_date)) FROM Tasks WHERE task_name = ? AND task_log_date BETWEEN ? AND ?"
+    else:
+        raise ValueError("Unsupported habit period")
+    
+    completed_units = dbcursor.execute(
+        query,
+        (habit_name, habit_start_date.strftime("%Y-%m-%d"), current_date.strftime("%Y-%m-%d"))
+    ).fetchone()[0]
+    
     return tracked_units, completed_units
 
 # Get struggled habits over the last month
@@ -49,7 +61,15 @@ def get_struggled_habits():
         days_since_creation = (datetime.now() - habit_creation_date).days
 
         # Determine the interval for tracking missed units
-        interval = min(days_since_creation, 30) if habit_period == 'daily' else min((days_since_creation // 7) + 1, 4)
+        if habit_period == 'daily':
+            interval = min(days_since_creation, 30)
+        elif habit_period == 'weekly':
+            creation_iso_week = habit_creation_date.isocalendar()[1]
+            current_iso_week = datetime.now().isocalendar()[1]
+            interval = min(current_iso_week - creation_iso_week + 1, 4)
+        else:
+            raise ValueError("Unsupported habit period")
+    
         tracked_units, completed_units = calculate_missed_counts(habit_name, habit_period, creation_date, interval)
 
         if completed_units < interval:
